@@ -72,6 +72,27 @@ pub fn parse_string_suffix(attr: TokenStream, item: TokenStream) -> TokenStream 
         .collect()
 }
 
+fn gen_parse(str: &str, suf: &str, span: Span) -> TokenTree {
+    let s = |mut tt1: TokenTree| {
+        tt1.set_span(span);
+        tt1
+    };
+    s(Group::new(Delimiter::None, stream([
+        s(str.parse::<Literal>().unwrap().into()),
+        s(Punct::new('.', Joint).into()),
+        Ident::new("parse", span).into(),
+        s(Punct::new(':', Joint).into()),
+        s(Punct::new(':', Joint).into()),
+        s(Punct::new('<', Joint).into()),
+        Ident::new(suf, span).into(),
+        s(Punct::new('>', Joint).into()),
+        s(Group::new(Delimiter::Parenthesis, TokenStream::new()).into()),
+        s(Punct::new('.', Joint).into()),
+        Ident::new("unwrap", span).into(),
+        s(Group::new(Delimiter::Parenthesis, TokenStream::new()).into()),
+    ])).into())
+}
+
 fn do_token(tt: TokenTree) -> TokenTree {
     let s = |mut tt1: TokenTree| {
         tt1.set_span(tt.span());
@@ -87,20 +108,7 @@ fn do_token(tt: TokenTree) -> TokenTree {
         TokenTree::Literal(ref lit) => {
             match split_suffix(&lit.to_string(), lit.span()) {
                 Ok((str, suf)) if !suf.is_empty() => {
-                    s(Group::new(Delimiter::None, stream([
-                        s(str.parse::<Literal>().unwrap().into()),
-                        s(Punct::new('.', Joint).into()),
-                        Ident::new("parse", tt.span()).into(),
-                        s(Punct::new(':', Joint).into()),
-                        s(Punct::new(':', Joint).into()),
-                        s(Punct::new('<', Joint).into()),
-                        Ident::new(suf, tt.span()).into(),
-                        s(Punct::new('>', Joint).into()),
-                        Group::new(Delimiter::Parenthesis, TokenStream::new()).into(),
-                        s(Punct::new('.', Joint).into()),
-                        Ident::new("unwrap", tt.span()).into(),
-                        Group::new(Delimiter::Parenthesis, TokenStream::new()).into(),
-                    ])).into())
+                    gen_parse(str, suf, tt.span())
                 },
                 _ => tt,
             }

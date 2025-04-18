@@ -44,6 +44,8 @@ fn split_suffix(s: &str, span: Span) -> Result<(&str, &str), TokenStream> {
     Ok(s.split_at(i+1))
 }
 
+/// Process the string suffix as `.parse::<suffix>().unwrap()`
+///
 /// # Examples
 /// ```
 /// use std::{net::Ipv4Addr, path::PathBuf};
